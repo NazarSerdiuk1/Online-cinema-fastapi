@@ -88,6 +88,17 @@ class UserModel(Base):
         back_populates="user",
         cascade="all, delete-orphan"
     )
+    
+    cart: Mapped["Cart"] = relationship(
+    "Cart",
+    back_populates="user",
+    uselist=False,
+    )
+
+    orders: Mapped[list["Order"]] = relationship(
+    "Order",
+    back_populates="user",
+    )
 
     @property
     def password(self) -> None:
@@ -291,3 +302,128 @@ class Movie(Base):
     stars: Mapped[list["StarModel"]] = relationship(
         secondary=movie_stars, back_populates="movies"
     )
+    cart_items: Mapped[list["CartItem"]] = relationship("CartItem")
+
+    order_items: Mapped[list["OrderItem"]] = relationship("OrderItem")
+
+class Cart(Base):
+    __tablename__ = "carts"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id"),
+        nullable=False,
+        unique=True,
+    )
+    
+    user: Mapped["UserModel"] = relationship(
+        "UserModel",
+        back_populates="cart",
+        uselist=False,
+    )
+
+    items: Mapped[list["CartItem"]] = relationship(
+        "CartItem",
+        back_populates="cart",
+        cascade="all, delete-orphan",
+    )
+
+class CartItem(Base):
+    __tablename__ = "cart_items"
+    __table_args__ = (
+        UniqueConstraint(
+            "cart_id",
+            "movie_id",
+            name="uq_cart_movie",
+        ),
+    )
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    cart_id: Mapped[int] = mapped_column(
+        ForeignKey("carts.id"),
+        nullable=False,
+    )
+
+    movie_id: Mapped[int] = mapped_column(
+        ForeignKey("movies.id"),
+        nullable=False,
+    )
+    added_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+    cart: Mapped["Cart"] = relationship(
+        "Cart",
+        back_populates="items",
+    )
+
+    movie: Mapped["Movie"] = relationship("Movie")
+
+class OrderStatus(str, enum.Enum):
+    PENDING = "pending"
+    PAID = "paid"
+    CANCELED = "canceled"
+
+class Order(Base):
+    __tablename__ = "orders"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    user_id: Mapped[int] = mapped_column(
+            ForeignKey("users.id"),
+            nullable=False,
+    )
+    
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        nullable=False,
+    )
+    status: Mapped[OrderStatus] = mapped_column(
+        Enum(OrderStatus),
+        default=OrderStatus.PENDING,
+        nullable=False,
+    )
+    
+    total_amount: Mapped[float | None] = mapped_column(
+        Numeric(10, 2)
+    )
+    user: Mapped["UserModel"] = relationship(
+        "UserModel",
+        back_populates="orders",
+    )
+    
+    items: Mapped[list["OrderItem"]] = relationship(
+        "OrderItem",
+        back_populates="order",
+        cascade="all, delete-orphan",
+    )
+class OrderItem(Base):
+    __tablename__ = "order_items"
+    
+    id: Mapped[int] = mapped_column(primary_key=True)
+    
+    order_id: Mapped[int] = mapped_column(
+        ForeignKey("orders.id"),
+        nullable=False,
+    )
+
+    movie_id: Mapped[int] = mapped_column(
+        ForeignKey("movies.id"),
+        nullable=False,
+    )
+
+    price_at_order: Mapped[float] = mapped_column(
+        Numeric(10, 2),
+        nullable=False,
+    )
+
+    order: Mapped["Order"] = relationship(
+        "Order",
+        back_populates="items",
+    )
+
+    movie: Mapped["Movie"] = relationship("Movie")
