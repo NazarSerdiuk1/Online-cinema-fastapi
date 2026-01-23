@@ -1,7 +1,8 @@
 import enum
 from datetime import datetime, date, timedelta, timezone
 from typing import List, Optional
-import uuid
+import uuid as uuid_pkg
+from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy import (
     ForeignKey,
@@ -25,10 +26,10 @@ from sqlalchemy.orm import (
     validates
 )
 
-from database import Base
-from validators import accounts as validators
-from security.passwords import hash_password, verify_password
-from security.utils import generate_secure_token
+from db.database import Base
+from db.validators import accounts as validators
+from db.security.passwords import hash_password, verify_password
+from db.security.utils import generate_secure_token
 
 
 class UserGroupEnum(str, enum.Enum):
@@ -269,9 +270,10 @@ class Movie(Base):
         UniqueConstraint("name", "year", "time", name="uq_movie_identity"),
     )
     
-    id: Mapped[int] = mapped_column(primary_key=True)
-    uuid: Mapped[uuid.UUID] = mapped_column(
-        default=uuid.uuid4, unique=True
+    id: Mapped[UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid_pkg.uuid4,
     )
 
     name: Mapped[str] = mapped_column(nullable=False)
