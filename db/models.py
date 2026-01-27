@@ -65,7 +65,10 @@ class UserModel(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
-    group_id: Mapped[int] = mapped_column(ForeignKey("user_groups.id", ondelete="CASCADE"), nullable=False)
+    group_id: Mapped[int] = mapped_column(
+        ForeignKey("user_groups.id", ondelete="CASCADE"), nullable=False
+    )
+    group: Mapped["UserGroupModel"] = relationship("UserGroupModel", back_populates="users")
     
     activation_token: Mapped[Optional["ActivationTokenModel"]] = relationship(
         "ActivationTokenModel",
