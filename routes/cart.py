@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from uuid import UUID
 
 from db.database import get_db
 from dependencies import get_current_user
@@ -23,7 +24,7 @@ def get_cart(
 
 @router.post("/add/{movie_id}", status_code=status.HTTP_201_CREATED)
 def add_to_cart(
-    movie_id: int,
+    movie_id: UUID,
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):

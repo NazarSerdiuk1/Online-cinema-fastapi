@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from uuid import UUID
 
 from db.database import get_db
 from db.models import Movie, GenreModel, DirectorModel, StarModel, CertificationModel
@@ -63,7 +64,7 @@ def list_movies(
 
 @router.get("/{movie_id}", response_model=MovieBaseSchema)
 def get_movie(
-    movie_id,
+    movie_id: UUID,
     db: Session = Depends(get_db),
 ):
     movie = db.get(Movie, movie_id)

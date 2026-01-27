@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime, date
 from typing import List, Optional
 from decimal import Decimal
@@ -10,7 +10,7 @@ class MovieBaseSchema(BaseModel):
     id: UUID
     name: str
     year: int
-    price: float
+    price: Decimal 
 
     class Config:
         from_attributes = True
@@ -23,12 +23,12 @@ class MovieCreateSchema(BaseModel):
     imdb: float
     votes: int
     description: str
-    price: float
+    price: Decimal 
     certification_id: int
 
-    genre_ids: Optional[List[int]] = []
-    director_ids: Optional[List[int]] = []
-    star_ids: Optional[List[int]] = []
+    genre_ids: Optional[List[int]] = Field(default_factory=list)
+    director_ids: Optional[List[int]] = Field(default_factory=list)
+    star_ids: Optional[List[int]] = Field(default_factory=list)
 
 class CartItemSchema(BaseModel):
     id: int
