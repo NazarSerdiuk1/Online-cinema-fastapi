@@ -4,8 +4,9 @@ from uuid import UUID
 
 from db.database import get_db
 from dependencies import get_current_user
-from db.models import Cart, CartItem, Movie, UserModel
+from db.models import UserModel
 from db.schemas import CartSchema
+from db.repositories.cart_repository import CartRepository
 
 router = APIRouter(prefix="/cart", tags=["Cart"])
 
@@ -14,13 +15,8 @@ def get_cart(
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
-    if not user.cart:
-        user.cart = Cart(user_id=user.id)
-        db.add(user.cart)
-        db.commit()
-        db.refresh(user.cart)
-
-    return user.cart
+    repo = CartRepository(db)
+    return repo.get_or_create(user)
 
 @router.post("/add/{movie_id}", status_code=status.HTTP_201_CREATED)
 def add_to_cart(
@@ -28,27 +24,8 @@ def add_to_cart(
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
-    if not user.cart:
-        user.cart = Cart(user_id=user.id)
-        db.add(user.cart)
-        db.commit()
-
-    movie = db.get(Movie, movie_id)
-    if not movie:
-        raise HTTPException(status_code=404, detail="Movie not found")
-
-    exists = (
-        db.query(CartItem)
-        .filter_by(cart_id=user.cart.id, movie_id=movie_id)
-        .first()
-    )
-    if exists:
-        raise HTTPException(status_code=400, detail="Movie already in cart")
-
-    item = CartItem(cart_id=user.cart.id, movie_id=movie_id)
-    db.add(item)
-    db.commit()
-
+    repo = CartRepository(db)
+    repo.add_movie(user, movie_id)
     return {"detail": "Movie added to cart"}
 
 @router.delete("/clear")
@@ -56,9 +33,6 @@ def clear_cart(
     db: Session = Depends(get_db),
     user: UserModel = Depends(get_current_user),
 ):
-    if not user.cart:
-        return {"detail": "Cart already empty"}
-
-    user.cart.items.clear()
-    db.commit()
+    repo = CartRepository(db)
+    repo.clear(user)
     return {"detail": "Cart cleared"}
