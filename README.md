@@ -40,7 +40,7 @@ This project provides a RESTful API for managing movies, users, authentication, 
     ```bash
     pip install poetry
     poetry install
-    ```    ```
+    ```    
 
 ## Run with Docker
 1. Build containers
